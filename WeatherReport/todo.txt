@@ -1,0 +1,6 @@
+[] connect to the weather api
+[] define input parameters
+[] retrieve data from the api
+[] parse the data
+[] create a report
+[] save report as PDF
