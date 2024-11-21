@@ -1,11 +1,11 @@
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.graphics.shapes import Drawing, Line
+from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.linecharts import HorizontalLineChart
 from reportlab.graphics.charts.legends import Legend
-from reportlab.lib.units import inch
+from reportlab.lib.styles import ParagraphStyle
 
 class PDFReportGenerator:
 	def __init__(self, filename="weather_report.pdf"):
@@ -23,25 +23,24 @@ class PDFReportGenerator:
 		)
 
 		elements = []
-
 		elements.append(self._create_title(city))
+		elements.append(self._create_table(weather_data))
+		elements.append(self._create_line_chart(weather_data))
 
-		#table_data = self._prepare_table_data(weather_data)
-		table = self._create_table(weather_data)
-		elements.append(table)
-
-		line_chart = self._create_line_chart(weather_data)
-		elements.append(line_chart)
-		
 		doc.build(elements)
 
 	# TITLE CREATION
-
 	def _create_title(self, city):
-		return Paragraph(f"Weather Report for {city}", self.styles['Heading1'])
+		heading_style = ParagraphStyle(
+			'HeadingStyle',
+			parent=self.styles['Heading1'],
+			alignment=1,
+			fontSize=18,
+			spaceAfter=25,
+		)
+		return Paragraph(f"Weather Report for {city}", heading_style)
 
 	# TABLE CREATION
-
 	def _create_table(self, weather_data):
 		table_data = self._prepare_table_data(weather_data)
 		table = Table(table_data)
@@ -74,12 +73,11 @@ class PDFReportGenerator:
 		return table_data
 
 	# LINE CHART CREATION
-
 	def _create_line_chart(self, weather_data):
 		drawing = Drawing(600, 300)
 
 		line_chart = HorizontalLineChart()
-		line_chart.x = 50
+		line_chart.x = 25
 		line_chart.y = 50
 		line_chart.width = 400
 		line_chart.height = 200
@@ -96,15 +94,14 @@ class PDFReportGenerator:
 		line_chart.valueAxis.valueMin = min(data[1]) - 2
 		line_chart.valueAxis.valueMax = max(data[2]) + 2
 		line_chart.valueAxis.valueStep = 2
+		line_chart.valueAxis.labelTextFormat = '%d°C'
 
-		# Add legend below the chart
 		legend = Legend()
-		legend.x = 50
-		legend.y = 30   # Position below chart
+		legend.x = 170
+		legend.y = 30
 		legend.fontName = 'Helvetica'
 		legend.fontSize = 8
 		legend.deltax = 150
-		legend.variColumn = 1  # Enable variable width columns
 
 		legend.colorNamePairs = [
 			(colors.red, 'Maximum Temperature'),
@@ -119,7 +116,7 @@ class PDFReportGenerator:
 	def _prepare_line_chart_data(self, weather_data):
 		hourly_mins = [float('inf')] * 24
 		hourly_maxs = [float('-inf')] * 24
-		hourly_sums = [0] * 24
+		hourly_sums = [0.0] * 24
 		day_count = len(weather_data)
 
 		for data in weather_data.values():
@@ -135,4 +132,5 @@ class PDFReportGenerator:
 		data.append(hourly_avgs)
 		data.append(hourly_mins)
 		data.append(hourly_maxs)
+
 		return data
